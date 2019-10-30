@@ -1,0 +1,132 @@
+version: "3.7"
+services:
+  envoy:
+    image: envoyproxy/envoy
+    container_name: redis-envoy
+    command: /usr/local/bin/envoy -c /etc/envoy.yaml --service-cluster proxy
+    volumes:
+      - ./envoy.yaml:/etc/envoy.yaml
+    expose:
+      - "6379"
+      - "9001"
+    ports:
+      - "6378:6379"
+      - "9001:9001"
+    depends_on: 
+      - redis-1 
+      - redis-2 
+      - redis-3
+      - sentinel-1 
+      - sentinel-2 
+      - sentinel-3
+    networks:
+      redis-ha:
+
+  redis-1:
+    image: redis
+    container_name: redis-1
+    command: redis-server /usr/local/etc/redis/redis.conf
+    volumes:    
+       - type: bind
+         source: ./redis-1.conf
+         target: /usr/local/etc/redis/redis.conf
+    expose:
+      - 6379
+    ports:
+      - 6381:6379
+    networks:
+      redis-ha:
+        aliases:
+        - redis-server
+
+  sentinel-1:
+    image: redis
+    container_name: sentinel-1
+    command: redis-server /usr/local/etc/redis/sentinel.conf --sentinel
+    depends_on: 
+      - redis-1
+    volumes:    
+       - type: bind
+         source: ./sentinel-1.conf
+         target: /usr/local/etc/redis/sentinel.conf
+    expose:
+      - 26379
+    ports:
+      - 26381:26379
+    networks:
+      redis-ha:
+
+  redis-2:
+    image: redis
+    container_name: redis-2
+    command: redis-server /usr/local/etc/redis/redis.conf
+    depends_on: 
+      - redis-1
+    volumes:    
+       - type: bind
+         source: ./redis-2.conf
+         target: /usr/local/etc/redis/redis.conf
+    expose:
+      - 6379
+    ports:
+      - 6382:6379
+    networks:
+      redis-ha:
+        aliases:
+        - redis-server
+
+  sentinel-2:
+    image: redis
+    container_name: sentinel-2
+    command: redis-server /usr/local/etc/redis/sentinel.conf --sentinel
+    depends_on: 
+      - redis-2
+    volumes:    
+       - type: bind
+         source: ./sentinel-2.conf
+         target: /usr/local/etc/redis/sentinel.conf
+    expose:
+      - 26379
+    ports:
+      - 26382:26379
+    networks:
+      redis-ha:
+
+  redis-3:
+    image: redis
+    container_name: redis-3
+    command: redis-server /usr/local/etc/redis/redis.conf
+    depends_on: 
+      - redis-1
+    volumes:    
+       - type: bind
+         source: ./redis-3.conf
+         target: /usr/local/etc/redis/redis.conf
+    expose:
+      - 6379
+    ports:
+      - 6383:6379
+    networks:
+      redis-ha:
+        aliases:
+        - redis-server
+
+  sentinel-3:
+    image: redis
+    container_name: sentinel-3
+    command: redis-server /usr/local/etc/redis/sentinel.conf --sentinel
+    depends_on: 
+      - redis-3
+    volumes:    
+       - type: bind
+         source: ./sentinel-3.conf
+         target: /usr/local/etc/redis/sentinel.conf
+    expose:
+      - 26379
+    ports:
+      - 26383:26379
+    networks:
+      redis-ha:
+      
+networks:
+  redis-ha:

@@ -1,0 +1,112 @@
+version: "3.7"
+services:
+  envoy:
+    image: envoyproxy/envoy
+    container_name: redis-envoy
+    command: /usr/local/bin/envoy -c /etc/envoy.yaml --service-cluster proxy
+    volumes:
+      - ./envoy.yaml:/etc/envoy.yaml
+    expose:
+      - "6379"
+      - "9001"
+    ports:
+      - "6378:6379"
+      - "9001:9001"
+
+  redis-1:
+    image: redis
+    container_name: redis-1
+    command: redis-server /usr/local/etc/redis/redis.conf
+    volumes:    
+       - type: bind
+         source: ./redis-1.conf
+         target: /usr/local/etc/redis/redis.conf
+    expose:
+      - 6379
+    ports:
+      - 6381:6379
+
+  redis-2:
+    image: redis
+    container_name: redis-2
+    command: redis-server /usr/local/etc/redis/redis.conf
+    depends_on: 
+      - redis-1
+    volumes:    
+       - type: bind
+         source: ./redis-2.conf
+         target: /usr/local/etc/redis/redis.conf
+    expose:
+      - 6379
+    ports:
+      - 6382:6379
+
+  redis-3:
+    image: redis
+    container_name: redis-3
+    command: redis-server /usr/local/etc/redis/redis.conf
+    depends_on: 
+      - redis-1
+    volumes:    
+       - type: bind
+         source: ./redis-3.conf
+         target: /usr/local/etc/redis/redis.conf
+    expose:
+      - 6379
+    ports:
+      - 6383:6379
+
+  redis-w1:
+    image: redis
+    container_name: redis-w1
+    command: redis-server /usr/local/etc/redis/redis.conf
+    volumes:    
+       - type: bind
+         source: ./redis-w1.conf
+         target: /usr/local/etc/redis/redis.conf
+    expose:
+      - 6379
+    ports:
+      - 6391:6379
+
+  redis-w2:
+    image: redis
+    container_name: redis-w2
+    command: redis-server /usr/local/etc/redis/redis.conf
+    depends_on: 
+      - redis-1
+    volumes:    
+       - type: bind
+         source: ./redis-w2.conf
+         target: /usr/local/etc/redis/redis.conf
+    expose:
+      - 6379
+    ports:
+      - 6392:6379
+
+  redis-w3:
+    image: redis
+    container_name: redis-w3
+    command: redis-server /usr/local/etc/redis/redis.conf
+    depends_on: 
+      - redis-1
+    volumes:    
+       - type: bind
+         source: ./redis-w3.conf
+         target: /usr/local/etc/redis/redis.conf
+    expose:
+      - 6379
+    ports:
+      - 6393:6379
+
+  cluster-setup:
+    image: redis
+    container_name: cluster-setup
+    command: redis-cli --cluster create redis-1:6379 redis-2:6379 redis-3:6379 redis-w1:6379 redis-w2:6379 redis-w3:6379 --cluster-replicas 1
+    depends_on: 
+      - redis-1 
+      - redis-2 
+      - redis-3
+      - redis-w1 
+      - redis-w2 
+      - redis-w3

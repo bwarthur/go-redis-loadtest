@@ -1,0 +1,5 @@
+dockerfile
+Makefile
+stats.txt
+*.log
+*.exe
